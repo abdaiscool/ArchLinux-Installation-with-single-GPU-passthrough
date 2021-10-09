@@ -10,6 +10,8 @@ I also just made this for myself incase I ever want to go back to this project. 
 
 Thanks and I hope this helped anyone who needed help.
 
+#### Anything you do is at your own risk, this worked for me, I just want you to know that I do not gurantee this will 100% work for anyone.
+
 
 # SOURCES
 
