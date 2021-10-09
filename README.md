@@ -1,9 +1,13 @@
 # INTRODUCTION
 
+Hello,
 
-I got motivated by SomeOrdinaryGamers, Mutahar, to attempt to make a simple to use VM, hidden from the guest, and quick enough to play games, so it's basically like bare-metal windows installation.
+I got motivated by SomeOrdinaryGamers, Mutahar, to attempt to make a simple to use VM, hidden from the guest, and quick enough to play games, so I've made this guide with my steps to make it work, this is primarly for me so I don't forget how to do this again.
+
 I may not be doing this in the best method possible, but this is how it worked for me, so you are free to make adaptions and change to your liking.
+
 I also just made this for myself incase I ever want to go back to this project. I've finished it but I don't feel at home yet, so I'm going back to Windows for now.
+
 Thanks and I hope this helped anyone who needed help.
 
 
