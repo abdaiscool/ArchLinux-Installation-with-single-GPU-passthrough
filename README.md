@@ -36,13 +36,12 @@ entering the fdisk utility:
 fdisk -l
 fdisk /dev/nvme0n1 (in my case, it could also be sda)
 ```
+```
 g - for new GPT partition table
-
 n - for new partition
-
 t - for partition types
-
 w - to write all changes
+```
 
 #### You would want to make a first partition with the last sector: +500M
 
