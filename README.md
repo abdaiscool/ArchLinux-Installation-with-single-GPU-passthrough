@@ -153,9 +153,9 @@ Edit ```/etc/default/grub```:
 nano /etc/default/grub
 ```
 
-under ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"``` add ```intel_iommu=on```
+Under ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"``` add ```intel_iommu=on```
 
-so it looks like this: ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 intel_iommu=on quiet"```
+so it looks like this: ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 intel_iommu=on quiet"```.
 
 #### You may also want to enable VD-t on intel systems in your motherboards BIOS (IOMMU won't work without it!).
 
