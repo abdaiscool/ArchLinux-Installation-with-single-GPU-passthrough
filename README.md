@@ -1,39 +1,41 @@
 # INTRODUCTION
 
+
 Hello,
 
-I got motivated by SomeOrdinaryGamers, Mutahar, to attempt to make a simple to use VM, hidden from the guest, and quick enough to play games, so I've made this guide with my steps to make it work, this is primarly for me so I don't forget how to do this again.
+I got motivated by SomeOrdinaryGamers, Mutahar, to attempt to make a simple to use VM, hidden from the guest, and quick enough to play games, so I've made this guide with my steps to make it work, this is primarily for me so I don't forget how to do this again.
 
-I may not be doing this in the best method possible, but this is how it worked for me, so you are free to make adaptions and change to your liking.
+I may not be doing this in the best method possible, but this is how it worked for me, so you are free to make adaptions and changes to your liking.
 
 I also just made this for myself incase I ever want to go back to this project. I've finished it but I don't feel at home yet, so I'm going back to Windows for now.
 
 Thanks and I hope this helped anyone who needed help.
 
-#### Anything you do is at your own risk, this worked for me, I just want you to know that I do not gurantee this will 100% work for anyone.
+#### Anything you do is at your own risk, this worked for me, I just want you to know that I do not guarantee this will 100% work for anyone.
 
 
 # SOURCES
 
+#### Thanks to these people, topics such as passthrough are widely available!
 
-[The Passthrough post](https://passthroughpo.st)
+1. [The Passthrough post](https://passthroughpo.st)
 
-[Single-GPU-Passthrough](https://github.com/joeknock90/Single-GPU-Passthrough) by joeknock90 on Github
+2. [Single-GPU-Passthrough](https://github.com/joeknock90/Single-GPU-Passthrough) by joeknock90 on Github
 
-[PCI passthrough via OVMF](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF) by wiki.archlinux.org
+3. [PCI passthrough via OVMF](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF) by wiki.archlinux.org
 
-[I Made The Greatest Windows 11 Virtual Machine...](https://www.youtube.com/watch?v=WYrTajuYhCk)  by SomeOrdinaryGamers on Youtube
+4. [I Made The Greatest Windows 11 Virtual Machine...](https://www.youtube.com/watch?v=WYrTajuYhCk)  by SomeOrdinaryGamers on Youtube
 
-[I Almost Lost My Virtual Machines...](https://www.youtube.com/watch?v=BUSrdUoedTo) by SomeOrdinaryGamers on Youtube
+5. [I Almost Lost My Virtual Machines...](https://www.youtube.com/watch?v=BUSrdUoedTo) by SomeOrdinaryGamers on Youtube
 
-[Indian Man Beats VALORANT's Shady Anticheat...](https://www.youtube.com/watch?v=L1JCCdo1bG4) by SomeOrdinaryGamers on Youtube
+6. [Indian Man Beats VALORANT's Shady Anticheat...](https://www.youtube.com/watch?v=L1JCCdo1bG4) by SomeOrdinaryGamers on Youtube
 
 
 
 ## INSTALLATION OF ARCH LINUX
 
 
-entering the fdisk utility:
+Entering the fdisk utility:
 ```
 fdisk -l
 fdisk /dev/nvme0n1 (in my case, it could also be sda)
@@ -45,60 +47,60 @@ t - for partition types
 w - to write all changes
 ```
 
-#### You would want to make a first partition with the last sector: +500M
+#### You would want to make a first partition as a 'System' partition, or 'EFI partition' with the last sector: +500M
 
-#### Select 1: 'EFI partition'
+#### With ```t``` change the type of the partition to ```1``` or ```EFI partition```.
 
-#### You would want to make a second partition and leave the type as 'Linux filesystem'
+#### You would also want to make a second partition, where you install arch, and leave the type as 'Linux filesystem'.
 
 
-format the first partition as FAT32:
+Format the first partition as FAT32:
 ```
 mkfs.fat -F32 /dev/nvme0n1p1 
 ```
-format the second partition as ext4:
+Format the second partition as ext4:
 ```
 mkfs.ext4 /dev/nvme0n1p2
 ```
-mount the second partition:
+Mount the second partition:
 ```
 mount /dev/nvme0n1p2 /mnt
 ```
-create a home folder:
+Create a home folder:
 ```
 mkdir /mnt/home
 ```
-creating a fstab file:
+Create an fstab file:
 ```
 mkdir /mnt/etc
 genfstab -U -p /mnt >> /mnt/etc/fstab
 ```
-confirm everything is good:
+Confirm everything is good:
 ```
 cat /mnt/etc/fstab
 ```
-install a package group / base packages:
+Install a package group / base packages:
 ```
 pacstrap -i /mnt base
 ```
-to configure the installation, to use the installation as chroot:
+To configure the installation chroot into the mounted ext4 partition:
 ```
 arch-chroot /mnt
 ```
-install linux, for long-term support: ```linux-lts linux-lts-headers```
+Install linux, for long-term support: ```linux-lts linux-lts-headers```
 ```
 pacman -S linux linux-headers  
 ```
-install packages like nano, networkmanager... for wifi consider: ```dialog wpa_supplicant wireless_tools netctl```
+Install packages like nano, NetworkManager... for wifi consider: ```dialog wpa_supplicant wireless_tools netctl```
 ```
 sudo pacman -S base-devel openssh nano networkmanager 
 ```
-enable NetworkManager & openssh to start when the computer starts:
+Enable NetworkManager & openssh to start when the computer starts:
 ```
 systemctl enable NetworkManager
 systemctl enable sshd
 ```
-generate mkinitcpio files:
+Generate mkinitcpio files:
 ```
 mkinitcpio -p linux (linux-lts)
 ```
