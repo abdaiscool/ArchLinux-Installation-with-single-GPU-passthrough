@@ -47,7 +47,7 @@ t - for partition types
 w - to write all changes
 ```
 
-#### You would want to make a first partition as a 'System' partition, or 'EFI partition' with the last sector: +500M
+#### You would want to make a first partition as a 'System' partition, or 'EFI partition' with the last sector: ```+500M```.
 
 #### With ```t``` change the type of the partition to ```1``` or ```EFI partition```.
 
@@ -104,109 +104,117 @@ Generate mkinitcpio files:
 ```
 mkinitcpio -p linux (linux-lts)
 ```
-time to select locales, uncomment the locales you need. I picked these: ```hr_HR.UTF-8 UTF-8 & en_us.UTF-8 UTF-8```
+Time to select locales, uncomment the locales you need. I picked these: ```hr_HR.UTF-8 UTF-8 & en_us.UTF-8 UTF-8```
 ```
 nano /etc/locale.gen
 ```
-generate locales:
+Generate locales:
 ```
 locale-gen
 ```
-setting the root password:
+Set the root password:
 ```
 passwd
 ```
-creating the user:
+Create the user:
 ```
 useradd -m -g users -G wheel "username"
 ```
-setting the password for the user:
+Set the password for the user:
 ```
 passwd "username"
 ```
-enabling sudo for users, uncomment ```%wheel ALL=(ALL) ALL```
+Enable sudo for users, uncomment ```%wheel ALL=(ALL) ALL```
 ```
 EDITOR=nano visudo
 ```
-getting grub for UEFI:
+Get grub for UEFI:
 ```
 pacman -S grub efibootmgr dosfstools os-prober mtools
 ```
-create EFI folder:
+Create EFI folder:
 ```
 mkdir /boot/EFI
 ```
-mount EFI partition:
+Mount EFI partition:
 ```
 mount /dev/nvme0n1p1 /boot/EFI
 ```
-installing grub:
+Install grub:
 ```
 grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 ```
-copying locales:
+Copy locales:
 ```
 cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 ```
-edit default/grub:
+Edit ```/etc/default/grub```:
+```
+nano /etc/default/grub
+```
+
 under ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"``` add ```intel_iommu=on```
 
 so it looks like this: ```GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 intel_iommu=on quiet"```
 
-you also need to enable VD-t on intel systems in bios.
-```
-nano /etc/default/grub
-```
-generate grub file:
+#### You may also want to enable VD-t on intel systems in your motherboards BIOS (IOMMU won't work without it!).
+
+
+Generate grub file:
 ```
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
-unmount drives and reboot, you should be able to boot without the installation media:
+Unmount drives and reboot (You should be able to boot without the installation media):
 ```
 umount -a
 reboot
 ```
-set the timezone, I set in my case ```Europe/Zagreb```:
+Set the timezone, I set in my case ```Europe/Zagreb```:
 ```
 timedatectl set-timezone Europe/Zagreb
 ```
-enabling the synchronization of clock:
+Enable the synchronization of clock:
 ```
 systemctl enable systemd-timesyncd
 ```
-setting the prefered keyboard layout for console and x11 (```croat``` & ```hr``` are for croation, use as wanted):
+Edit vconsole.conf for keyboard kayout in console:
 ```
 nano /etc/vconsole.conf
 ```
-in this newly created vconsole.conf add ```KEYMAP=croat```.
+In this newly created vconsole.conf add ```KEYMAP=croat```.
+
+Set the prefered keyboard layout for console and x11 (```croat``` & ```hr``` are for croation, use as wanted):
 ```
 localectl set-keymap croat
 localectl set-x11-keymap hr
 ```
-setting the hostname:
+Set the hostname (I used 'arch'):
 ```
 hostnamectl set-hostname "name"
+```
+Edit the hosts file:
+```
 nano /etc/hosts
 ```
-add these lines at the end of the file:
+Add these lines at the end of the file:
 ```
 127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 "name"
 ```
-installing the microcode, xorg, nvidia (nvidia-lts for linux-lts):
+Install the microcode for your CPU, xorg, nvidia (nvidia-lts for linux-lts):
 ```
 pacman -S intel-ucode xorg-server nvidia nvidia-utils
 ```
-installing GNOME:
+Install GNOME:
 ```
 pacman -S gnome gnome-tweaks
 ```
-enabling display manager:
+Enable display manager:
 ```
 systemctl enable gdm
 ```
-installing yay, AUR helper:
+Install yay, AUR helper:
 ```
 sudo pacman -S git
 cd /opt
@@ -220,11 +228,11 @@ makepkg -si
 ## SOFTWARE FOR KVM/QEMU VM
 
 
-confirm IOMMU is enabled:
+Confirm IOMMU is enabled:
 ```
 dmesg | grep -i -e DMAR -e IOMMU
 ```
-indentify your gpu, make sure it is in its separe iommu group, as well as anything else you want to pass:
+Indentify your gpu, make sure it is in its separe iommu group, as well as anything else you want to pass:
 ```
 #!/bin/bash
 shopt -s nullglob
@@ -235,20 +243,25 @@ for g in `find /sys/kernel/iommu_groups/* -maxdepth 0 -type d | sort -V`; do
     done;
 done;
 ```
-#### copy all your devices in your GPU to a seperate file to use for later
+My GPU (GTX 1060) looks like this after the previous command:
+```
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 6GB] [10de:1c03] (rev a1)
+01:00.1 Audio device [0403]: NVIDIA Corporation GP106 High Definition Audio Controller [10de:10f1] (rev a1)
+```
+#### Copy all your devices in your GPU to a seperate file to use for later.
 
-#### if there is anything else in your IOMMU group, and it isn't PCI BRIDGE, you may want to consider ACS patching.
+#### If there is anything else in your IOMMU group, and it isn't PCI BRIDGE, you may want to consider ACS patching.
 
-install all required software for qemu:
+Install all required software for QEMU:
 ```
 sudo pacman -S qemu libvirt edk2-ovmf virt-manager iptables-nft dnsmasq 
 ```
-enable and start the services:
+Enable and start the services:
 ```
 sudo systemctl enable libvirtd.service virtlogd.socket
 sudo systemctl start libvirtd.service virtlogd.socket
 ```
-activate and start the default libvirt network:
+Activate and start the default libvirt network:
 ```
 virsh net-autostart default
 virsh net-start default
@@ -258,75 +271,76 @@ virsh net-start default
 ## DUMPING GPU VBIOS + PATCH
 
 
-get nvflash from yay:
+Get 'nvflash' from yay:
 ```
 yay -S nvflash 
 ```
-get bless (hex editor):
+Get 'bless' (hex editor):
 ```
 sudo pacman -S bless
 ```
-dump your vbios (you may want to do this with open-source drivers):
+Dump your vbios (you may want to do this with open-source drivers):
 ```
 sudo nvflash --save gpu.rom
 ```
-using bless, load 'gpu.rom' and search for 'VIDEO' as text.
-a little earlier then 'VIDEO' you will find a 'U'. delete everything that comes before it.
+Using bless, load 'gpu.rom' and search for 'VIDEO' as text.
 
-save as 'patch.rom'
+After finding 'VIDEO', a little earlier then 'VIDEO' you will find a 'U'. delete everything that comes before it.
+
+Save as 'patch.rom'
 
 
 ## CREATING A VM USING VIRT-MANAGER
 
 
-1. download windows iso from microsoft
-2. open virt-manager
-3. create a new vm
-4. select local instal media
-5. if it asks for permissions, click yes
-6. give it ram
-7. give it cpu
-8. you may want to use a virtual disk, or passthrough a disk
-9. select customize before install
-10. change chipset to 'Q35'
-11. change firmware to 'UEFI x86_64...OVMF_CODE.fd'
-12. setup topology
-13. enable 'SATA CDROM1' in boot options
-14. press next to install windows...
-15. when you finish, shut it down
+1. Download windows .iso from [Microsoft](https://www.microsoft.com/software-download/windows10ISO).
+2. Open virt-manager.
+3. Create a new VM.
+4. Select local instal media.
+5. If it asks for permissions, click yes.
+6. Give it RAM.
+7. Give it CPU.
+8. You may want to use a virtual disk, or pass a disk, or even pass the entire SATA controller if it's in it's own IOMMU group.
+9. Select customize before install.
+10. Change chipset to ```Q35```.
+11. Change firmware to ```UEFI x86_64: /usr/share/edk2-ovmf/x64/OVMF_CODE.fd```.
+12. Setup topology (more advanced).
+13. Enable 'SATA CDROM1' in boot options.
+14. Press 'Begin Installatino' to install Windows...
+15. When you finish, shut it down.
 
 
 ## SETTING UP A SCRIPT TO HIJACK AND RELEASE THE GPU
 
 
-get wget:
+Get 'wget':
 ```
 sudo pacman -S wget
 ```
-make a libvirt/hooks folder:
+Make a libvirt/hooks folder in '/etc/':
 ```
 sudo mkdir -p /etc/libvirt/hooks
 ```
-install hook manager and make it executable:
+Mnstall hook manager and make it executable:
 ```
 sudo wget 'https://raw.githubusercontent.com/PassthroughPOST/VFIO-Tools/master/libvirt_hooks/qemu' \
      -O /etc/libvirt/hooks/qemu
 sudo chmod +x /etc/libvirt/hooks/qemu
 ```
-make a kvm.conf file:
+Make a 'kvm.conf' file:
 ```
 nano /etc/libvirt/hooks/kvm.conf
 ```
-add this into the 'kvm.conf' (you copied the numbers when you identified the gpu):
+Add this into the 'kvm.conf' (you copied the numbers when you identified the gpu):
 ```
 VIRSH_GPU_VIDEO=pci_0000_01_00_0
 VIRSH_GPU_AUDIO=pci_0000_01_00_1
 ```
-get tree:
+Get 'tree':
 ```
 sudo pacman -S tree
 ```
-#### you need to create scripts and folder to look like this:
+#### You need to create scripts and folder to look like this:
 ```
 /etc/libvirt/hooks
 ├── qemu <- The script that does the magic
@@ -339,12 +353,12 @@ sudo pacman -S tree
             └── end
                 └── revert.sh
 ```
-first script to hijack the gpu:
+Create the folders and the first script to hijack the GPU:
 ```              
 sudo mkdir /etc/libvirt/hooks/qemu.d/win10/prepare/begin
 sudo nano /etc/libvirt/hooks/qemu.d/win10/prepare/begin/start.sh
 ```
-the start.sh script (the script is personalized towards me):
+The first, 'start.sh', script (the script is personalized towards me):
 ```
 # debugging
 set -x
@@ -384,16 +398,16 @@ modprobe vfio
 modprobe vfio_pci
 modprobe vfio_iommu_type1
 ```
-make the script executable:
+Make the script executable:
 ```
 sudo chmod +x /etc/libvirt/hooks/qemu.d/win10/prepare/begin/start.sh
 ```
-second script to release the gpu:
+Make the folders and the second script to release the GPU:
 ```
 sudo mkdir /etc/libvirt/hooks/qemu.d/win10/release/end
 sudo nano /etc/libvirt/hooks/qemu.d/win10/release/end/revert.sh
 ```
-the revert.sh script (the script is personalized towards me):
+The second, 'revert.sh', script (the script is personalized towards me):
 ```
 # debug
 set -x
@@ -432,7 +446,7 @@ modprobe nvidia_uvm
 # restart display service
 systemctl start gdm.service
 ```
-make the script executable:
+Make the script executable:
 ```
 sudo chmod +x /etc/libvirt/hooks/qemu.d/win10/release/end/revert.sh
 ```
@@ -441,15 +455,14 @@ sudo chmod +x /etc/libvirt/hooks/qemu.d/win10/release/end/revert.sh
 ## PASSING THE GPU TO THE VM
 
 
-1. go into virt-manager and add your gpus under '+Add Hardware' and 'PCI Host Device'
-2. edit the added PCI device within virt-manager as XML
-3. under ```</source>``` and above ```<address type='pci'...>```
-4. add ```<rom file='/home/"user"/patch.rom'>``` (you should change this path the the patch.rom path you made earlier)
-5. you should add this line to all your GPU devices
+1. Go into virt-manager and add your GPU and it's devices (eg. digital audio) under '+Add Hardware' and 'PCI Host Device'.
+2. Edit the added PCI device within virt-manager as XML.
+3. Under ```</source>``` and above ```<address type='pci'...>``` add ```<rom file='/home/"user"/patch.rom'>``` (you should change this path to the 'patch.rom' path script you made earlier).
+5. You should add this line to all your GPU devices.
 
-#### before booting the VM add following lines to your VM's xml (win10.xml in my case):
+#### Before booting the VM add following lines to your VM's XML (Some may not be needed, I added these just to be sure)(win10.xml in my case):
 
-inside ```<hyperv>```:
+Inside ```<hyperv>```:
 ```
 <hyperv>
  <relaxed state="on"/>
@@ -465,15 +478,15 @@ inside ```<hyperv>```:
  <tlbflush state="on"/>
 </hyperv>
 ```
-#### after installing windows, attempt to enable Hyper-V in Windows features, it might help with anticheats.
+#### After installing windows, attempt to enable Hyper-V in Windows features, it might help with anticheats (it also may make Windows not bootable, I don't know how to deal with that at the moment).
 
-under ```</hyperv>``` add:
+Under ```</hyperv>``` add:
 ```
 <kvm>
  <hidden state="on"/>
 </kvm>
 ```
-change the ```<cpu>``` section:
+Change the ```<cpu>``` section:
 ```
 <cpu mode="host-passthrough" check="none" migratable="on">
  <topology sockets="1" dies="1" cores="3" threads="2"/> (suit your topology)
@@ -481,7 +494,7 @@ change the ```<cpu>``` section:
  <feature policy="require" name="topoext"/>
 </cpu>
 ```
-above ```<os>``` add:
+Above ```<os>``` add:
 ```
 <sysinfo type="smbios">
  <bios>
@@ -501,11 +514,11 @@ above ```<os>``` add:
   </system>
 </sysinfo>
 ```
-and in ```<os>``` add:
+And in ```<os>``` add:
 ```
 <smbios mode="sysinfo"/>
 ```
-if you consider cpu pinning, this is my example for i7-7700k:
+If you consider cpu pinning, this is my example for i7-7700k:
 ```
 <vcpu placement="static">6</vcpu>
 <iothreads>1</iothreads>
@@ -520,29 +533,31 @@ if you consider cpu pinning, this is my example for i7-7700k:
  <iothreadpin iothread="1" cpuset="0,4"/>
 </cputune>
 ```
-#### don't forget to click apply multiple times so you don't forget anything
+#### Don't forget to click apply multiple times so you don't forget anything!
 
 
 ## CREATING CPU ISOLATING SCRIPTS
 
+#### This is optional, it may improve performance.
 
-create a isolstart.sh script
+
+Create a 'isolstart.sh' script:
 ```
 sudo nano /etc/libvirt/hooks/qemu.d/win10/prepare/begin/isolstart.sh
 sudo chmod +x /etc/libvirt/hooks/qemu.d/win10/prepare/begin/isolstart.sh
 ```
-make it look like this, adapt to your liking:
+Make it look like this, adapt to your liking:
 ```
 systemctl set-property --runtime -- user.slice AllowedCPUs=0,4
 systemctl set-property --runtime -- system.slice AllowedCPUs=0,4
 systemctl set-property --runtime -- init.scope AllowedCPUs=0,4
 ```
-create isocpurevert.sh script
+Create 'isocpurevert.sh' script:
 ```
 sudo nano /etc/libvirt/hooks/qemu.d/win10/release/end/iscpurevert.sh
 sudo chmod +x /etc/libvirt/hooks/qemu.d/win10/release/end/iscpurevert.sh
 ```
-make it look like this, adapt it to your PC of course:
+Make it look like this, adapt it to your PC of course:
 ```
 systemctl set-property --runtime -- user.slice AllowedCPUs=0-7
 systemctl set-property --runtime -- system.slice AllowedCPUs=0-7
@@ -552,18 +567,18 @@ systemctl set-property --runtime -- init.scope AllowedCPUs=0-7
 
 ## SETTING UP OPENSSH ON A CLIENT
 
+#### (Optional, not required).
 
 #### Windows may come integrated with openssh available in cmd, if not, get it.
 
-to make connecting to the hypervisor, host, we can make a 'config' file in ~/.ssh folder:
+To make connecting to the hypervisor, host, we can make a 'config' file in ~/.ssh folder:
 ```
 Host "name"
     HostName "ip_address"
     User "user"
 ```
-this should enable connecting with just eg. ```ssh arch``` instead of ```ssh user@192.168.1.5```.
+This should enable connecting with just eg. ```ssh arch``` instead of ```ssh user@192.168.1.5```.
 
 Thank you,
 
 abdaiscool
-
